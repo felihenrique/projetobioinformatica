@@ -27,19 +27,32 @@ pacientes_names = {
 # plt.plot(px, py, 'ro')
 con = sqlite3.connect("../banco.db")
 cursor = con.cursor()
-def generate_peptides_points():
-    point_x = np.array([])
-    point_y = np.array([])
+def generate_points():
+    mrna_list = np.array([])
+    peptide_count_list = np.array([])
+    score_list = np.array([])
+	
     for pacient_id in pacientes:
         cursor.execute("SELECT gene_name, mrna FROM expressaoRNA WHERE id_paciente=?", 
                        (pacientes_names[pacient_id],))
         for linha in cursor.fetchall():
             if (linha[0] != None):
-                name = 'peptides_' + pacient_id
-                qry = "SELECT " + name + " from proteinGroups WHERE gene_names='" + linha[0] + "'"
+                names = 'peptides_' + pacient_id + ',' + 'intensity_' + pacient_id
+                qry = "SELECT " + names + " from proteinGroups WHERE gene_names='" + linha[0] + "'"
                 cursor.execute(qry)
                 result = cursor.fetchone() 
                 if (result != None):
-                    point_x = np.insert(point_x, 0, linha[1])
-                    point_y = np.insert(point_y, 0, result[0])
-    return point_x, point_y
+                    mrna_list = np.insert(mrna_list, 0, linha[1])
+                    peptide_count_list = np.insert(peptide_count_list, 0, result[0])
+                    score_list = np.insert(score_list, 0, result[1])
+    return mrna_list, peptide_count_list, score_list
+
+def generate_score_graphic(pr, ps):
+    plt.title('Score')
+    plt.plot(pr, ps, 'ro')
+    plt.savefig('score.png')
+    
+def generate_peptides_graphic(pr, ps):
+    plt.title('Peptides')
+    plt.plot(pr, ps, 'ro')
+    plt.savefig('peptides.png')
