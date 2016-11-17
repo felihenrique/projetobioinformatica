@@ -28,6 +28,29 @@ pacientes_names = {
 con = sqlite3.connect("../banco.db")
 cursor = con.cursor()
 
+def gerar_sql(name1, name2):
+    query = """DROP TABLE IF EXISTS lista_{0};
+CREATE TABLE lista_{0} (
+   protein_id VARCHAR(50) UNIQUE DEFAULT(0),
+   gene_names VARCHAR(50) DEFAULT(0),
+   peptides INT DEFAULT(0),
+   intensity BIGINT DEFAULT(0)
+);
+INSERT INTO lista_aa3672 (protein_id, gene_names, peptides, intensity)
+SELECT protein_id, gene_names, peptides_{0}, intensity_{0}
+FROM proteinGroups, expressaoRNA
+WHERE id_paciente='{1}' AND gene_names = gene_name ORDER BY intensity_{0} DESC;
+DELETE FROM lista_{0} WHERE protein_id LIKE '%;%';
+.mode csv
+.headers on
+.output ../listas/intensidade/lista_{0}.txt
+.separator \\t
+SELECT * FROM lista_{0} LIMIT 500;
+.output stdout
+""".format(name1, name2)
+    f = open('../consultas_sql/lista_{0}.sql'.format(name1), 'w+')
+    f.writelines(query)
+
 def gerar_coordenadas(paciente_id):
     q = """SELECT mrna, peptides_"""+paciente_id+""", intensity_"""+paciente_id+""" FROM expressaoRNA, proteinGroups 
     WHERE id_paciente='"""+pacientes_names[paciente_id]+"""' 
